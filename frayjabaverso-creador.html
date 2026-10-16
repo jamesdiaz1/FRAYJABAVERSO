@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frayjabaverso: Taller de videojuegos</title>
+<style>
+:root{--bg:#14110f;--panel:#1f1a16;--line:#3a3028;--tx:#f3ece2;--mut:#b5a898;--ac:#f2b134;--ac2:#3fc7a6;--bad:#ff7a6b}
+*{box-sizing:border-box}
+html,body{margin:0;overflow-x:hidden}
+body{background:var(--bg);color:var(--tx);font:17px/1.55 Georgia,"Times New Roman",serif;padding:16px}
+h1,h2,h3,button,label,.tag{font-family:"Trebuchet MS",Verdana,sans-serif}
+h1{font-size:clamp(2rem,8vw,3.4rem);margin:.2em 0;line-height:1.05;letter-spacing:-.02em}
+h2{font-size:1.5rem;margin:.2em 0 .6em}
+main{max-width:760px;margin:0 auto}
+.panel{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:20px}
+.bar{display:flex;gap:6px;margin-bottom:14px}
+.bar i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.bar i.on{background:var(--ac)}
+label{display:block;font-weight:700;margin:14px 0 4px}
+input,textarea,select{width:100%;min-height:46px;padding:10px 12px;border-radius:8px;border:2px solid var(--line);background:#120f0d;color:var(--tx);font:inherit}
+textarea{min-height:88px;resize:vertical}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--ac2);outline-offset:1px}
+button{min-height:46px;min-width:46px;padding:10px 18px;border:0;border-radius:10px;background:var(--ac);color:#201400;font-weight:800;font-size:1rem;cursor:pointer;touch-action:manipulation}
+button.sec{background:transparent;color:var(--tx);border:2px solid var(--line)}
+button.big{font-size:1.2rem;padding:14px 26px;background:var(--ac2);color:#06231c}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:20px}
+.err{color:var(--bad);font-family:"Trebuchet MS",sans-serif;min-height:1.4em;margin-top:10px}
+.mundos{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:620px){.mundos{grid-template-columns:1fr 1fr}}
+.w{text-align:left;color:#fff;border:3px solid transparent;border-radius:14px;padding:14px;font-weight:400;font-size:.92rem;line-height:1.4;min-height:0}
+.w b{display:block;font-size:1.1rem;margin:4px 0}
+.w .em{font-size:2rem}
+.w.sel{border-color:#fff;box-shadow:0 0 0 3px var(--ac)}
+dl{margin:0}dt{font-family:"Trebuchet MS",sans-serif;font-weight:700;color:var(--ac);margin-top:10px}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+#out{min-height:260px;font:14px/1.45 Consolas,monospace}
+.fr{display:flex;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding:10px 0}
+.fr span{flex:1}
+.ok{color:var(--ac2);font-family:"Trebuchet MS",sans-serif;min-height:1.4em}
+ol{padding-left:22px}
+.hero{border-left:6px solid var(--ac);padding-left:16px;margin:10px 0 20px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+/* Datos en memoria. No se usa localStorage, sessionStorage ni cookies. */
+const D={};let n=0;
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const MEC=['Preguntas y trivia','Plataforma y saltos','Aventura con decisiones','Rompecabezas y lógica','Simulación','Carrera contra el tiempo','Exploración y misiones','Combate estratégico educativo','Otro'];
+const MUS=['Chiptune de 8 bits','Música electrónica','Orquesta de aventura','Sonidos de naturaleza','Solo efectos'];
+const MUNDOS=[
+{k:'Mundo mágico, el bosque encantado',e:'🌳',c:'linear-gradient(135deg,#0b6b4f,#17a3a3 55%,#6a3fb5)',d:'Árboles gigantes, hongos luminosos y ríos brillantes. Ambiente de misterio, calma y curiosidad. Reto: encontrar cristales mágicos para devolverle la vida al bosque.',
+ p:'Colores: verde esmeralda, azul turquesa, violeta y dorado brillante. Sensación: misterio, tranquilidad y curiosidad. Elementos: árboles gigantes, hongos luminosos, flores mágicas, ríos brillantes, piedras flotantes y pequeñas criaturas fantásticas. Iluminación: rayos de luz entre las hojas y partículas luminosas en el aire. Sonido: canto de aves, agua corriendo y sonidos mágicos suaves. Desafío característico: encontrar cristales mágicos para devolverle la vida al bosque.'},
+{k:'Mundo futurista, la ciudad tecnológica',e:'🤖',c:'linear-gradient(135deg,#050510,#1c3dff 50%,#d4189b)',d:'Rascacielos, robots y hologramas bajo luces de neón. Ambiente de velocidad y tensión. Reto: hackear sistemas de seguridad y derrotar a una inteligencia artificial.',
+ p:'Colores: azul eléctrico, magenta, negro y cian. Sensación: velocidad, energía, tensión y tecnología avanzada. Elementos: rascacielos, vehículos voladores, robots, hologramas, pantallas gigantes y carreteras iluminadas. Iluminación: neón, reflejos sobre pavimento mojado y anuncios holográficos. Sonido: motores, alarmas, voces robóticas y música electrónica. Desafío característico: hackear sistemas de seguridad y derrotar a una inteligencia artificial.'},
+{k:'Mundo de supervivencia, la isla perdida',e:'🏝️',c:'linear-gradient(135deg,#1e6b2f,#1a8fc4 55%,#c9a24a)',d:'Palmeras, cuevas, cascadas y ruinas antiguas. Ambiente de aventura y libertad. Reto: conseguir alimento, construir refugios y escapar de la isla.',
+ p:'Colores: verde selva, azul océano, amarillo arena y marrón tierra. Sensación: aventura, peligro, libertad y exploración. Elementos: palmeras, playas, cuevas, cascadas, animales salvajes, naufragios y ruinas antiguas. Iluminación: sol intenso de día, sombras profundas en la selva y tonos anaranjados al atardecer. Sonido: olas, viento, insectos, aves y rugidos lejanos. Desafío característico: conseguir alimento, construir refugios y descubrir cómo escapar de la isla.'},
+{k:'Mundo oscuro, el reino de las sombras',e:'🌑',c:'linear-gradient(135deg,#0a0a0c,#4a2a66 55%,#a0102a)',d:'Castillos abandonados, niebla espesa y portales oscuros. Ambiente de suspenso y soledad. Reto: derrotar al guardián de las sombras y recuperar la luz del reino.',
+ p:'Colores: negro, gris ceniza, rojo carmesí y violeta oscuro. Sensación: suspenso, miedo, soledad y peligro. Elementos: castillos abandonados, árboles secos, niebla espesa, calaveras, ruinas, portales oscuros y criaturas monstruosas. Iluminación: luna roja, antorchas débiles y cristales de luz roja. Sonido: viento fuerte, puertas que crujen, pasos misteriosos y rugidos. Desafío característico: derrotar al guardián de las sombras y recuperar la luz del reino.'}];
+
+/* Campos: [id, etiqueta, tipo(t,a,s), ayuda u opciones, obligatorio] */
+const PASOS=[
+{t:'Paso 1. Elige qué quieres enseñar o aprender',f:[
+['area','Asignatura o área','t','Matemáticas, física, química, biología, inglés...',1],
+['tema','Tema específico del videojuego','t','Ejemplo: fracciones, la célula, verbo to be',1],
+['nivel','Grado o nivel al que se dirige el juego','t','Ejemplo: grado 8',1],
+['obj','Objetivo de aprendizaje. ¿Qué quieres que el jugador aprenda o practique?','a','Ejemplo: que el jugador sume fracciones con distinto denominador',1]]},
+{t:'Paso 2. Inventa cómo se jugará',f:[
+['mec','Mecánica de juego','s',MEC,1],
+['mecO','Si elegiste Otro, descríbela','t','Escribe tu mecánica',0],
+['hist','Historia. ¿Qué sucede en el juego?','a','Ejemplo: el río perdió su luz y solo tú puedes recuperarla',1],
+['meta','Objetivo principal. ¿Qué debe conseguir el jugador para ganar?','a','Ejemplo: reunir 5 cristales',1],
+['retos','Retos y obstáculos','a','Ejemplo: puentes rotos, enemigos que hacen preguntas',0],
+['pers','Personaje principal: apariencia, habilidades y personalidad','a','Ejemplo: una exploradora curiosa con linterna',0],
+['enem','Enemigo, rival o dificultad principal','t','Ejemplo: el Guardián del Error',0],
+['rec','Recompensas','t','Puntos, monedas, cristales, herramientas, poderes o insignias',0],
+['caso','Caso cotidiano que el juego convertirá en reto','a','Ejemplo: calcular el cambio al comprar en la tienda',1]]},
+{t:'Paso 3. Elige el mundo de tu videojuego',w:1},
+{t:'Paso 4. Personaliza la experiencia',f:[
+['mus','Estilo de música y sonidos','s',MUS,1],
+['dif','Nivel de dificultad','s',['Fácil','Intermedio','Difícil'],1],
+['dur','Duración aproximada','s',['5 minutos','10 minutos','15 minutos'],1],
+['ctl','Controles preferidos','s',['Teclado','Táctiles','Teclado y táctiles'],1],
+['msg','Mensaje o frase que quieres incluir en el juego','t','Ejemplo: Aprender es la mejor aventura',0]]}];
+
+const FRASES=['Mejora los gráficos y las animaciones sin cambiar la historia ni los objetivos educativos.','Aumenta la dificultad progresivamente y crea desafíos más interesantes para mi grado.','Mejora los controles para que funcionen correctamente en computador y celular.','Añade nuevas misiones relacionadas con el tema académico del videojuego.','Mejora la música y los efectos de sonido utilizando Web Audio API.','Haz que las decisiones tengan consecuencias visibles dentro de la historia.','Mejora la retroalimentación para explicar por qué cada respuesta es correcta o incorrecta.','Optimiza el rendimiento y corrige los errores del código sin eliminar funciones existentes.','Añade animaciones, recompensas y efectos visuales coherentes con el mundo seleccionado.','Revisa el sistema de puntuación y verifica que la calificación final corresponda al desempeño real.'];
+
+function bar(){return '<div class="bar" aria-label="Progreso">'+[1,2,3,4,5,6].map(i=>'<i class="'+(i<=n?'on':'')+'"></i>').join('')+'</div>'}
+function fld(f){
+ const [id,l,t,p,r]=f;let h='<label for="'+id+'">'+esc(l)+(r?' *':'')+'</label>';
+ if(t==='s'){if(D[id]===undefined&&id!=='mec')D[id]=p[0];
+  h+='<select id="'+id+'">'+(id==='mec'?'<option value="">Elige una opción</option>':'')+p.map(o=>'<option'+(D[id]===o?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'}
+ else if(t==='a')h+='<textarea id="'+id+'" placeholder="'+esc(p)+'">'+esc(D[id])+'</textarea>';
+ else h+='<input id="'+id+'" placeholder="'+esc(p)+'" value="'+esc(D[id])+'">';
+ return h}
+function nav(back,next,label){return '<div class="err" id="err" role="alert"></div><div class="row"><button class="sec" data-a="back">'+back+'</button><button data-a="next">'+next+'</button></div>'}
+
+function render(){
+ const a=$('app');window.scrollTo(0,0);
+ if(n===0){a.innerHTML='<div class="hero"><p class="tag" style="color:var(--ac2);margin:0">I. E. Fray Javier de Barcelona</p><h1>Frayjabaverso</h1></div><div class="panel"><p>¡Bienvenido al Frayjabaverso! Aquí tú eres el creador. Elige tu mundo, inventa tus desafíos y convierte lo que aprendes en un videojuego. Usa tu imaginación y crea una experiencia que otros estudiantes puedan disfrutar.</p><p>Responde unas preguntas. La herramienta arma un prompt. Tú lo pegas en Claude, ChatGPT o Gemini y recibes tu juego.</p><div class="row"><span></span><button class="big" data-a="next">Empezar a crear</button></div></div>';return}
+ if(n===1){a.innerHTML=bar()+'<div class="panel"><h2>Registro del creador</h2>'+[['nom','Nombre completo','t','Tu nombre y apellidos',1],['tit','Nombre del videojuego que quieres crear','t','Ejemplo: Guardianes del Río',1],['gra','Grado que cursas','t','Ejemplo: 9°',1]].map(fld).join('')+nav('Inicio','Siguiente')+'</div>';return}
+ if(n>=2&&n<=5){const p=PASOS[n-2];let h=bar()+'<div class="panel"><h2>'+p.t+'</h2>';
+  if(p.w){h+='<p>Toca un mundo para elegirlo. Solo puedes elegir uno.</p><div class="mundos">'+MUNDOS.map((m,i)=>'<button class="w'+(D.mundo===i?' sel':'')+'" style="background:'+m.c+'" data-w="'+i+'" aria-pressed="'+(D.mundo===i)+'"><span class="em">'+m.e+'</span><b>'+m.k+'</b>'+m.d+'</button>').join('')+'</div>'}
+  else h+=p.f.map(fld).join('');
+  a.innerHTML=h+nav('Atrás','Siguiente')+'</div>';return}
+ if(n===6){const m=MUNDOS[D.mundo];const R=[['Creador',D.nom],['Videojuego',D.tit],['Grado del creador',D.gra],['Asignatura',D.area],['Tema',D.tema],['Nivel del juego',D.nivel],['Objetivo de aprendizaje',D.obj],['Mecánica',D.mec==='Otro'?D.mecO:D.mec],['Historia',D.hist],['Objetivo principal',D.meta],['Retos y obstáculos',D.retos],['Personaje',D.pers],['Enemigo o rival',D.enem],['Recompensas',D.rec],['Caso cotidiano',D.caso],['Mundo',m.e+' '+m.k],['Música y sonidos',D.mus],['Dificultad',D.dif],['Duración',D.dur],['Controles',D.ctl],['Frase del juego',D.msg]];
+  a.innerHTML=bar()+'<div class="panel"><h2>Revisa tu proyecto</h2><dl>'+R.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1]||'La IA lo completará por ti')+'</dd>').join('')+'</dl><div class="row"><button class="sec" data-a="back">Atrás</button><button class="big" data-a="make">Crear mi videojuego</button></div></div>';return}
+ if(n===7){const pr=buildPrompt();
+  a.innerHTML='<div class="panel"><h2>Tu prompt está listo</h2><textarea id="out" readonly>'+esc(pr)+'</textarea><div class="row"><button data-a="copy" data-t="out">Copiar prompt</button><button class="sec" data-a="back">Editar proyecto</button></div><div class="ok" id="ok"></div>'+
+  '<h2>Cómo obtener tu juego</h2><ol><li>Copia el prompt.</li><li>Pégalo en Claude, ChatGPT o Gemini y envíalo.</li><li>Copia el código HTML que te responda.</li><li>Pégalo en el Bloc de notas y guárdalo con el nombre juego.html. Elige tipo de archivo: Todos los archivos.</li><li>Abre el archivo con tu navegador y juega.</li></ol>'+
+  '<h2>Mejora mi videojuego</h2><p>Pega estas frases en la misma conversación donde creaste el juego.</p>'+FRASES.map((f,i)=>'<div class="fr"><span id="f'+i+'">'+f+'</span><button class="sec" data-a="copy" data-t="f'+i+'">Copiar</button></div>').join('')+
+  '<div class="row"><span></span><button class="big" data-a="new">Nuevo proyecto</button></div></div>'}
+}
+
+function buildPrompt(){
+ const m=MUNDOS[D.mundo],mec=D.mec==='Otro'?(D.mecO||'Otro, a elección de la IA'):D.mec,v=x=>x||'(vacío: complétalo de forma coherente con el resto)';
+ return `Eres un experto desarrollador de videojuegos educativos y programador web. Crea el videojuego COMPLETO y FUNCIONAL en UN SOLO archivo HTML (HTML, CSS y JavaScript nativos, sin librerías, frameworks, servidores, APIs ni recursos externos, que funcione sin internet). Responde únicamente con el código completo, sin pseudocódigo, fragmentos ni propuestas de diseño. Código limpio, organizado y comentado.
+
+IDENTIDAD
+- Institución: I. E. Fray Javier de Barcelona. Universo narrativo: Frayjabaverso.
+- Creador del proyecto: ${D.nom}. Grado del creador: ${D.gra}.
+- Título del videojuego: ${D.tit}.
+
+IDEA DEL ESTUDIANTE (respétala; completa solo lo vacío)
+- Asignatura: ${D.area}. Tema: ${D.tema}. Nivel al que va dirigido: ${D.nivel}.
+- Objetivo de aprendizaje: ${D.obj}
+- Mecánica: ${mec}
+- Historia: ${D.hist}
+- Objetivo principal: ${D.meta}
+- Retos y obstáculos: ${v(D.retos)}
+- Personaje principal: ${v(D.pers)}
+- Enemigo, rival o dificultad principal: ${v(D.enem)}
+- Recompensas: ${v(D.rec)}
+- Caso cotidiano a convertir en reto interactivo: ${D.caso}
+- Dificultad: ${D.dif}. Duración aproximada: ${D.dur}. Controles: ${D.ctl}.
+- Música y sonidos: ${D.mus}.
+- Frase para incluir en el juego: ${v(D.msg)}
+
+MUNDO ELEGIDO: ${m.k}
+${m.p}
+La estética, los colores, los escenarios, la iluminación, los gráficos y el ambiente sonoro deben seguir este mundo. Gráficos con CSS, SVG o canvas.
+
+COMPONENTES OBLIGATORIOS, EN ESTE ORDEN
+A. Pantalla de registro (la primera al abrir): nombre completo, nombre del videojuego y grado. Los tres son obligatorios y se validan. Guárdalos solo en variables de JavaScript. No uses localStorage, sessionStorage, cookies ni bases de datos.
+B. Pantalla de bienvenida: título, nombre del creador, grado, historia introductoria breve, objetivo principal, instrucciones claras y botón para comenzar.
+C. Mundo y mecánica: escenarios interactivos, personajes, objetivos, obstáculos, recompensas, animaciones y controles funcionales. El contenido educativo debe ser parte de las acciones del jugador, no texto teórico sin interacción.
+D. Misiones educativas: al menos 5 retos del tema y del grado, con retroalimentación inmediata, explicación sencilla de los errores, opción de reintentar, dificultad gradual y ejemplos de la vida cotidiana.
+E. Caso práctico interactivo basado en el caso cotidiano: una situación conectada con al menos 4 decisiones del jugador, cada una con consecuencias y retroalimentación, y que exijan aplicar conocimientos de la asignatura. No bastan 4 preguntas sueltas.
+F. Puntuación y evaluación: sistema de puntos funcional y fórmula clara que convierta el desempeño en una calificación de 1.0 a 5.0, explicada brevemente. Niveles: 1.0 a 2.9 desempeño bajo, 3.0 a 3.9 básico, 4.0 a 4.5 alto, 4.6 a 5.0 superior. La nota refleja las acciones reales. Nunca asignes la nota máxima de forma automática.
+G. Audio con Web Audio API, sin archivos externos: música o ambiente coherente con el mundo y el estilo elegido, efectos de acierto, error, recompensa y eventos importantes, botón para silenciar, volumen moderado, inicio del audio tras una interacción del usuario.
+H. Pantalla final: nombre del estudiante, nombre del videojuego, grado, puntaje, calificación de 1.0 a 5.0, nivel de desempeño, retos superados, respuestas correctas e incorrectas, resumen de conceptos aprendidos, recomendaciones para mejorar y botón para volver a jugar. Todo calculado con el desempeño real de la partida, sin datos ficticios.
+I. Identidad del Frayjabaverso: incluye una referencia narrativa y visual (emblema, portal o insignia) que indique que el juego pertenece al Frayjabaverso, coherente con el mundo y sin distraer del aprendizaje.
+
+COMPATIBILIDAD
+Funciona en computador, tableta y celular: meta viewport, diseño responsive, sin desplazamiento horizontal, texto legible, botones de al menos 44 por 44 px, una columna en pantallas estrechas, controles táctiles (toque, deslizamiento o botones en pantalla) y de teclado y mouse según la mecánica, prevención de doble toque y de cambios de orientación, buen contraste. Interfaz en español. Maneja errores sin bloquear el juego. No incluyas claves ni pidas credenciales.
+
+Antes de entregar, verifica que el registro sea obligatorio, que todo funcione y que el archivo esté listo para guardarse como .html.`}
+
+function validar(){
+ const g=[...(n===1?['nom','tit','gra']:[]),...(n>=2&&n<=5&&PASOS[n-2].f?PASOS[n-2].f.filter(f=>f[4]).map(f=>f[0]):[])];
+ for(const id of g)if(!(D[id]||'').trim())return 'Completa los campos con asterisco antes de seguir.';
+ if(n===3&&D.mec==='Otro'&&!(D.mecO||'').trim())return 'Describe tu mecánica en el campo Otro.';
+ if(n===4&&D.mundo===undefined)return 'Elige uno de los cuatro mundos.';
+ return ''}
+
+function copiar(id){
+ const el=$(id),t=el.value!==undefined&&el.tagName==='TEXTAREA'?el.value:el.textContent,ok=()=>{const o=$('ok')||el;const b=$('ok');if(b){b.textContent='Copiado. Ya puedes pegarlo en tu IA.';setTimeout(()=>b.textContent='',2500)}};
+ const fb=()=>{const x=document.createElement('textarea');x.value=t;x.style.position='fixed';x.style.opacity=0;document.body.appendChild(x);x.select();try{document.execCommand('copy');ok()}catch(e){if(el.select)el.select();alert('Selecciona el texto y cópialo con Ctrl+C o mantén pulsado en el celular.')}x.remove()};
+ if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(ok,fb);else fb()}
+
+$('app').addEventListener('input',e=>{if(e.target.id)D[e.target.id]=e.target.value});
+$('app').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.w!==undefined){D.mundo=+b.dataset.w;render();return}
+ const a=b.dataset.a;
+ if(a==='next'){const er=validar();if(er){$('err').textContent=er;return}n++;render()}
+ else if(a==='back'){n--;render()}
+ else if(a==='make'){n=7;render()}
+ else if(a==='copy'){const f=b.dataset.t;if(f==='out'||true)copiar(f)}
+ else if(a==='new'){if(confirm('Se borrará tu proyecto actual. ¿Continuar?')){Object.keys(D).forEach(k=>delete D[k]);n=0;render()}}
+});
+render();
+</script>
+</body>
+</html>
